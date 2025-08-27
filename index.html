@@ -30,7 +30,6 @@
         .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 16px; left: 4px; position: absolute; transition: .4s; width: 16px; border-radius: 50%; }
         input:checked + .slider { background-color: #3b82f6; }
         input:checked + .slider:before { transform: translateX(24px); }
-
         #settings-panel {
             overflow: hidden;
             transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out, margin-top 0.5s ease-in-out;
@@ -40,18 +39,48 @@
             opacity: 0;
             margin-top: 0 !important;
         }
+        /* モーダル */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: white; border-radius: 1rem; padding: 2rem;
+            width: 90%; max-width: 48rem; max-height: 80vh; overflow-y: auto;
+            transform: scale(0.9); transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .dark .modal-content { background-color: #1f2937; } /* bg-gray-800 */
+        /* アチーブメントカード */
+        .achievement-card.locked { filter: grayscale(1); opacity: 0.6; }
+        /* トースト通知 */
+        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; }
+        .toast {
+            background-color: #1f2937; color: white; padding: 1rem 1.5rem;
+            border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 0.75rem;
+            transform: translateX(120%); opacity: 0;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+        .toast.show { transform: translateX(0); opacity: 1; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900">
     <div class="w-full max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8 space-y-6 my-8">
         <header class="flex justify-between items-center">
             <h1 class="text-3xl font-bold text-gray-800 dark:text-white">AIタイピング練習</h1>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 sm:space-x-4">
                 <div class="theme-switch-wrapper">
                     <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">☀️</span>
                     <label class="theme-switch" for="theme-checkbox"><input type="checkbox" id="theme-checkbox" /><div class="slider"></div></label>
                     <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">🌙</span>
                 </div>
+                <button id="achievements-button" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1m0-1V4m0 2.01V8m0 0h.01M12 14h.01M12 16h.01M12 18h.01M12 20h.01M18 8a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
+                </button>
                 <button id="settings-toggle-button" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </button>
@@ -59,7 +88,7 @@
         </header>
 
         <div id="settings-panel" class="space-y-6 settings-collapsed">
-            <div class="bg-yellow-50 dark:bg-gray-700/50 p-4 rounded-lg">
+             <div class="bg-yellow-50 dark:bg-gray-700/50 p-4 rounded-lg">
                  <label for="api-key-input" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Gemini APIキー設定:</label>
                  <div class="flex flex-col sm:flex-row gap-2">
                     <input type="password" id="api-key-input" class="flex-grow p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="ご自身のAPIキーを入力してください">
@@ -77,26 +106,30 @@
                  <p id="data-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">設定と履歴をファイルに保存したり、ファイルから復元したりします。</p>
             </div>
         </div>
-
-        <div class="bg-blue-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="sm:col-span-2">
-                    <label for="ai-prompt" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">キーワード:</label>
-                    <input type="text" id="ai-prompt" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="例：夏休み、宇宙、ことわざ">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-blue-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">AIで練習文を生成:</label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <input type="text" id="ai-prompt" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="キーワード (例: 夏休み)">
+                    </div>
+                    <div>
+                        <input type="number" id="ai-length" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" value="150" min="50" max="2000" step="50">
+                    </div>
                 </div>
-                <div>
-                    <label for="ai-length" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">文字数 (約):</label>
-                    <input type="number" id="ai-length" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" value="150" min="50" max="2000" step="50">
+                <div class="flex justify-end">
+                    <button id="generate-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center w-full sm:w-auto">
+                        <span id="generate-button-text">✨ 文章を生成</span>
+                        <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </button>
                 </div>
             </div>
-            <div class="flex justify-end">
-                <button id="generate-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center w-full sm:w-auto">
-                    <span id="generate-button-text">✨ 文章を生成</span>
-                    <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
+            <div class="bg-green-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3 flex flex-col">
+                <label for="presets-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">プリセットから選択:</label>
+                <select id="presets-select" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white flex-grow">
+                    <option value="">カテゴリを選択...</option>
+                </select>
             </div>
         </div>
 
@@ -127,7 +160,6 @@
             <button id="reset-button" class="w-full md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 text-lg">スタート / リセット</button>
         </div>
 
-        <!-- グラフと履歴エリア -->
         <div class="space-y-4">
             <h2 class="text-2xl font-bold text-gray-800 dark:text-white">KPM推移グラフ</h2>
             <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
@@ -138,11 +170,7 @@
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300 sticky top-0">
                         <tr>
-                            <th scope="col" class="px-4 py-3">日時</th>
-                            <th scope="col" class="px-4 py-3">タイプ/分</th>
-                            <th scope="col" class="px-4 py-3">正確率</th>
-                            <th scope="col" class="px-4 py-3">文章</th>
-                            <th scope="col" class="px-4 py-3">操作</th>
+                            <th scope="col" class="px-4 py-3">日時</th><th scope="col" class="px-4 py-3">タイプ/分</th><th scope="col" class="px-4 py-3">正確率</th><th scope="col" class="px-4 py-3">文章</th><th scope="col" class="px-4 py-3">操作</th>
                         </tr>
                     </thead>
                     <tbody id="history-body"></tbody>
@@ -151,6 +179,22 @@
         </div>
     </div>
 
+    <!-- アチーブメントモーダル -->
+    <div id="achievements-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">アチーブメント</h2>
+                <button id="close-achievements-modal" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">&times;</button>
+            </div>
+            <div id="achievements-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- アチーブメントはここに表示されます -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- トースト通知コンテナ -->
+    <div id="toast-container"></div>
+
     <script>
         tailwind.config = { darkMode: 'class' }
 
@@ -158,6 +202,7 @@
         const STORAGE_KEY_HISTORY = 'typingGameHistory';
         const STORAGE_KEY_THEME = 'typingGameTheme';
         const STORAGE_KEY_APIKEY = 'geminiApiKey';
+        const STORAGE_KEY_STATS = 'typingGameStats';
 
         // DOM要素
         const settingsToggleButton = document.getElementById('settings-toggle-button');
@@ -187,6 +232,12 @@
         const historyBody = document.getElementById('history-body');
         const progressBar = document.getElementById('progress-bar');
         const kpmChartCanvas = document.getElementById('kpm-chart');
+        const presetsSelect = document.getElementById('presets-select');
+        const achievementsModal = document.getElementById('achievements-modal');
+        const achievementsButton = document.getElementById('achievements-button');
+        const closeAchievementsModalButton = document.getElementById('close-achievements-modal');
+        const achievementsGrid = document.getElementById('achievements-grid');
+        const toastContainer = document.getElementById('toast-container');
 
         let targetText = '';
         let startTime;
@@ -196,19 +247,153 @@
         let currentAccuracy = 100;
         let isFinished = false;
         let kpmChart;
+        let gameStats = {};
+
+        // --- プリセット例文データ ---
+        const presets = {
+            '文学作品': [
+                { title: '吾輩は猫である', text: '吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。' },
+                { title: '走れメロス', text: 'メロスは激怒した。必ず、かの邪智暴虐の王を除かなければならぬと決意した。' },
+            ],
+            'ことわざ': [
+                { title: '犬も歩けば棒に当たる', text: '犬も歩けば棒に当たる。' },
+                { title: '猿も木から落ちる', text: '猿も木から落ちる。' },
+            ],
+            // ここに新しいカテゴリや例文を追加できます
+        };
+        
+        // --- アチーブメントデータ ---
+        const achievements = {
+            firstStep: { title: 'はじめの一歩', description: '初めてのタイピングを完了する', unlocked: false },
+            char1k: { title: 'キーボードウォリアー', description: '累計1,000文字入力する', unlocked: false },
+            char10k: { title: '指の求道者', description: '累計10,000文字入力する', unlocked: false },
+            kpm200: { title: '音速タイパー', description: 'KPM 200を達成する', unlocked: false },
+            kpm400: { title: '光速の打鍵士', description: 'KPM 400を達成する', unlocked: false },
+            noMistake: { title: 'パーフェクト', description: 'ノーミスで100文字以上の文章をクリアする', unlocked: false },
+            accuracy99: { title: '精密機械', description: '正確率99%以上でクリアする', unlocked: false },
+            play10: { title: '常連さん', description: '10回練習する', unlocked: false },
+            play100: { title: 'タイピングの鬼', description: '100回練習する', unlocked: false },
+            aiUser: { title: 'AI使い', description: 'AIで初めて文章を生成する', unlocked: false },
+        };
 
         function initialize() {
             setupTheme();
             setupApiKey();
             setupDataHandlers();
             setupSettingsToggle();
+            setupPresets();
+            setupAchievements();
             resetGame();
+            loadStats();
             loadHistory();
             resetButton.addEventListener('click', resetGame);
             generateButton.addEventListener('click', handleGenerateText);
             textInput.addEventListener('input', handleInput);
             textInput.addEventListener('keydown', handleKeyDown);
             historyBody.addEventListener('click', handleHistoryClick);
+        }
+
+        function setupPresets() {
+            for (const category in presets) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = category;
+                presets[category].forEach((item, index) => {
+                    const option = document.createElement('option');
+                    option.value = `${category}-${index}`;
+                    option.textContent = item.title;
+                    optgroup.appendChild(option);
+                });
+                presetsSelect.appendChild(optgroup);
+            }
+            presetsSelect.addEventListener('change', (e) => {
+                const [category, index] = e.target.value.split('-');
+                if (category && index) {
+                    customTextArea.value = presets[category][index].text;
+                }
+            });
+        }
+        
+        function setupAchievements() {
+            achievementsButton.addEventListener('click', () => {
+                renderAchievements();
+                achievementsModal.classList.add('active');
+            });
+            closeAchievementsModalButton.addEventListener('click', () => achievementsModal.classList.remove('active'));
+            achievementsModal.addEventListener('click', (e) => {
+                if (e.target === achievementsModal) achievementsModal.classList.remove('active');
+            });
+        }
+
+        function renderAchievements() {
+            achievementsGrid.innerHTML = '';
+            for (const id in achievements) {
+                const achievement = achievements[id];
+                const isUnlocked = gameStats.unlockedAchievements.includes(id);
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-lg border ${isUnlocked ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/50' : 'border-gray-300 dark:border-gray-600'} ${!isUnlocked ? 'achievement-card locked' : ''}`;
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">${isUnlocked ? '🏆' : '❓'}</div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 dark:text-white">${achievement.title}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${achievement.description}</p>
+                        </div>
+                    </div>
+                `;
+                achievementsGrid.appendChild(card);
+            }
+        }
+        
+        function checkAchievements() {
+            const check = (id, condition) => {
+                if (!gameStats.unlockedAchievements.includes(id) && condition) {
+                    gameStats.unlockedAchievements.push(id);
+                    showToast(`実績解除: ${achievements[id].title}`);
+                }
+            };
+            check('firstStep', gameStats.gamesPlayed >= 1);
+            check('char1k', gameStats.totalCharsTyped >= 1000);
+            check('char10k', gameStats.totalCharsTyped >= 10000);
+            check('kpm200', gameStats.highestKpm >= 200);
+            check('kpm400', gameStats.highestKpm >= 400);
+            check('noMistake', gameStats.lastGame.mistakes === 0 && gameStats.lastGame.textLength >= 100);
+            check('accuracy99', gameStats.lastGame.accuracy >= 99);
+            check('play10', gameStats.gamesPlayed >= 10);
+            check('play100', gameStats.gamesPlayed >= 100);
+            check('aiUser', gameStats.aiGeneratedCount >= 1);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<span>🏆</span><span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 500);
+            }, 5000);
+        }
+
+        function loadStats() {
+            const savedStats = JSON.parse(localStorage.getItem(STORAGE_KEY_STATS));
+            gameStats = {
+                totalCharsTyped: 0,
+                gamesPlayed: 0,
+                highestKpm: 0,
+                aiGeneratedCount: 0,
+                unlockedAchievements: [],
+                lastGame: {},
+                ...savedStats
+            };
+        }
+
+        function saveStats() {
+            localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(gameStats));
         }
 
         function setupSettingsToggle() {
@@ -221,10 +406,7 @@
                 } else {
                     settingsPanel.style.maxHeight = "0px";
                     settingsPanel.style.marginTop = "0";
-                    // アニメーション終了後にクラスを追加
-                    setTimeout(() => {
-                        settingsPanel.classList.add('settings-collapsed');
-                    }, 500);
+                    setTimeout(() => { settingsPanel.classList.add('settings-collapsed'); }, 500);
                 }
             });
         }
@@ -257,10 +439,11 @@
         }
 
         function handleExport() {
-            const apiKey = localStorage.getItem(STORAGE_KEY_APIKEY) || "";
-            const history = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || "[]");
-            const dataToExport = { apiKey, history };
-            
+            const dataToExport = {
+                apiKey: localStorage.getItem(STORAGE_KEY_APIKEY) || "",
+                history: JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || "[]"),
+                stats: JSON.parse(localStorage.getItem(STORAGE_KEY_STATS) || "{}")
+            };
             const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -270,7 +453,6 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
             dataStatus.textContent = "データをエクスポートしました。";
             setTimeout(() => { dataStatus.textContent = "設定と履歴をファイルに保存したり、ファイルから復元したりします。"; }, 3000);
         }
@@ -278,21 +460,19 @@
         function handleImport(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const content = e.target.result;
-                    const importedData = JSON.parse(content);
-                    if (typeof importedData.apiKey === 'string' && Array.isArray(importedData.history)) {
+                    const importedData = JSON.parse(e.target.result);
+                    if (typeof importedData.apiKey === 'string' && Array.isArray(importedData.history) && typeof importedData.stats === 'object') {
                         localStorage.setItem(STORAGE_KEY_APIKEY, importedData.apiKey);
                         localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(importedData.history));
+                        localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(importedData.stats));
                         setupApiKey();
+                        loadStats();
                         loadHistory();
                         dataStatus.textContent = "データのインポートが完了しました。";
-                    } else {
-                        throw new Error("ファイルの形式が正しくありません。");
-                    }
+                    } else { throw new Error("ファイルの形式が正しくありません。"); }
                 } catch (error) {
                     dataStatus.textContent = `インポートエラー: ${error.message}`;
                 } finally {
@@ -304,12 +484,12 @@
         }
 
         async function generateTextWithGemini(keyword, length) {
+            gameStats.aiGeneratedCount++;
+            saveStats();
             const apiKey = localStorage.getItem(STORAGE_KEY_APIKEY);
             if (!apiKey) return "エラー: APIキーが設定されていません。上の入力欄からAPIキーを設定してください。";
-            
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。句読点や改行も適度に含めてください。`;
-
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -330,10 +510,7 @@
         
         async function handleGenerateText() {
             const keyword = aiPromptInput.value.trim();
-            if (!keyword) {
-                customTextArea.value = "キーワードを入力してください。";
-                return;
-            }
+            if (!keyword) { customTextArea.value = "キーワードを入力してください。"; return; }
             const length = aiLengthInput.value || 150;
             generateButton.disabled = true;
             generateButtonText.textContent = '生成中...';
@@ -356,6 +533,7 @@
                 const isDark = themeCheckbox.checked;
                 document.documentElement.classList.toggle('dark', isDark);
                 localStorage.setItem(STORAGE_KEY_THEME, isDark ? 'dark' : 'light');
+                loadHistory(); // グラフの色を更新するために再描画
             });
         }
 
@@ -441,6 +619,21 @@
             clearInterval(timerInterval);
             textInput.disabled = true;
             updateStats(); 
+            
+            // 統計情報を更新
+            gameStats.totalCharsTyped += targetText.length;
+            gameStats.gamesPlayed++;
+            if (currentKpm > gameStats.highestKpm) {
+                gameStats.highestKpm = currentKpm;
+            }
+            gameStats.lastGame = {
+                mistakes: mistakes,
+                accuracy: currentAccuracy,
+                textLength: targetText.length
+            };
+            checkAchievements();
+            saveStats();
+
             saveResult();
             loadHistory();
         }
@@ -455,7 +648,6 @@
                 fullText: targetText
             };
             history.unshift(result);
-            if (history.length > 50) history.pop();
             localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
         }
 
@@ -486,15 +678,12 @@
         }
         
         function renderKpmChart(history) {
-            if (kpmChart) {
-                kpmChart.destroy();
-            }
+            if (kpmChart) kpmChart.destroy();
             if (history.length === 0) return;
 
             const reversedHistory = [...history].reverse();
             const labels = reversedHistory.map(item => item.date);
             const data = reversedHistory.map(item => parseFloat(item.kpm));
-
             const isDarkMode = document.documentElement.classList.contains('dark');
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             const fontColor = isDarkMode ? 'rgba(255, 255, 255, 0.7)' : '#6b7280';
@@ -519,25 +708,12 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: fontColor },
-                            grid: { color: gridColor }
-                        },
-                        x: {
-                            ticks: { color: fontColor },
-                            grid: { color: gridColor }
-                        }
+                        y: { beginAtZero: true, ticks: { color: fontColor }, grid: { color: gridColor } },
+                        x: { ticks: { color: fontColor }, grid: { color: gridColor } }
                     },
                     plugins: {
-                        legend: {
-                            labels: { color: fontColor }
-                        },
-                        tooltip: {
-                            backgroundColor: '#1f2937',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                        }
+                        legend: { labels: { color: fontColor } },
+                        tooltip: { backgroundColor: '#1f2937', titleColor: '#ffffff', bodyColor: '#ffffff' }
                     }
                 }
             });
