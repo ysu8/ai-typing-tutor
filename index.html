@@ -84,6 +84,19 @@
             </div>
         </header>
 
+        <div id="rank-display-area" class="p-4 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
+            <div class="flex justify-between items-center mb-1">
+                <span id="current-rank-title" class="font-bold text-gray-800 dark:text-white"></span>
+                <span id="next-rank-title" class="text-sm text-gray-500 dark:text-gray-400"></span>
+            </div>
+            <div class="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-2.5">
+                <div id="rank-progress-bar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-2.5 rounded-full" style="width: 0%; transition: width 0.5s;"></div>
+            </div>
+            <div class="text-right text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <span id="rank-progress-text"></span>
+            </div>
+        </div>
+
         <div id="settings-panel" class="space-y-6 settings-collapsed">
              <div class="bg-yellow-50 dark:bg-gray-700/50 p-4 rounded-lg">
                  <label for="api-key-input" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Gemini APIキー設定:</label>
@@ -93,26 +106,43 @@
                  </div>
                  <p id="api-key-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">APIキーはご自身のブラウザにのみ保存されます。</p>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-                 <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">データ管理:</label>
-                 <div class="flex flex-col sm:flex-row gap-2">
-                    <button id="export-button" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">エクスポート</button>
-                    <button id="import-button" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">インポート</button>
-                    <input type="file" id="import-file-input" class="hidden" accept=".json">
+            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3">
+                 <div>
+                     <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">データ管理:</label>
+                     <div class="flex flex-col sm:flex-row gap-2">
+                        <button id="export-button" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">エクスポート</button>
+                        <button id="import-button" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">インポート</button>
+                        <input type="file" id="import-file-input" class="hidden" accept=".json">
+                     </div>
+                     <p id="data-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">設定と履歴をファイルに保存したり、ファイルから復元したりします。</p>
                  </div>
-                 <p id="data-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">設定と履歴をファイルに保存したり、ファイルから復元したりします。</p>
+                 <div>
+                     <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">リセット:</label>
+                     <div class="flex flex-col sm:flex-row gap-2">
+                         <button id="reset-achievements-button" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">実績をリセット</button>
+                     </div>
+                 </div>
             </div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-blue-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">AIで練習文を生成:</label>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
                     <div class="sm:col-span-2">
-                        <input type="text" id="ai-prompt" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="キーワード (例: 夏休み)">
+                        <label for="ai-prompt" class="block text-xs font-medium text-gray-600 dark:text-gray-400">キーワード</label>
+                        <input type="text" id="ai-prompt" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="例: 夏休み">
                     </div>
                     <div>
+                        <label for="ai-length" class="block text-xs font-medium text-gray-600 dark:text-gray-400">文字数</label>
                         <input type="number" id="ai-length" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" value="150" min="50" max="2000" step="50">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="ai-model-select" class="block text-xs font-medium text-gray-600 dark:text-gray-400">モデル</label>
+                        <select id="ai-model-select" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
+                            <option value="gemini-2.5-flash">Flash (高速)</option>
+                            <option value="gemini-2.5-pro">Pro (高精度)</option>
+                        </select>
                     </div>
                 </div>
                 <div class="flex justify-end">
@@ -196,6 +226,16 @@
             </div>
         </div>
     </div>
+    <div id="confirm-reset-achievements-modal" class="modal-overlay">
+        <div class="modal-content max-w-sm">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">実績のリセット</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">すべての実績がリセット（未達成の状態に）されます。この操作は元に戻せません。本当にリセットしますか？</p>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancel-reset-achievements-button" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200">キャンセル</button>
+                <button id="confirm-reset-achievements-button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white">リセットする</button>
+            </div>
+        </div>
+    </div>
     
     <div id="toast-container"></div>
 
@@ -207,6 +247,7 @@
         const STORAGE_KEY_THEME = 'typingGameTheme';
         const STORAGE_KEY_APIKEY = 'geminiApiKey';
         const STORAGE_KEY_STATS = 'typingGameStats';
+        const STORAGE_KEY_MODEL = 'typingGameModel';
 
         // DOM要素
         const settingsToggleButton = document.getElementById('settings-toggle-button');
@@ -220,6 +261,7 @@
         const dataStatus = document.getElementById('data-status');
         const aiPromptInput = document.getElementById('ai-prompt');
         const aiLengthInput = document.getElementById('ai-length');
+        const aiModelSelect = document.getElementById('ai-model-select');
         const generateButton = document.getElementById('generate-button');
         const generateButtonText = document.getElementById('generate-button-text');
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -246,6 +288,16 @@
         const confirmDeleteModal = document.getElementById('confirm-delete-modal');
         const confirmDeleteButton = document.getElementById('confirm-delete-button');
         const cancelDeleteButton = document.getElementById('cancel-delete-button');
+        const resetAchievementsButton = document.getElementById('reset-achievements-button');
+        const confirmResetAchievementsModal = document.getElementById('confirm-reset-achievements-modal');
+        const confirmResetAchievementsButton = document.getElementById('confirm-reset-achievements-button');
+        const cancelResetAchievementsButton = document.getElementById('cancel-reset-achievements-button');
+        const rankDisplayArea = {
+            currentTitle: document.getElementById('current-rank-title'),
+            nextTitle: document.getElementById('next-rank-title'),
+            progressBar: document.getElementById('rank-progress-bar'),
+            progressText: document.getElementById('rank-progress-text'),
+        };
 
         let targetText = '';
         let startTime;
@@ -266,13 +318,34 @@
                 { title: '犬も歩けば棒に当たる', text: '犬も歩けば棒に当たる。' },
                 { title: '猿も木から落ちる', text: '猿も木から落ちる。' },
             ],
+            '登場人物（カタカナ）': [
+                { title: 'ナカジマアツシ', text: 'ナカジマアツシ' },
+                { title: 'ダザイオサム', text: 'ダザイオサム' },
+                { title: 'サクラギハナミチ', text: 'サクラギハナミチ' },
+                { title: 'ルカワカエデ', text: 'ルカワカエデ' },
+            ],
         };
         
+        const ranks = [
+            { threshold: 0, title: 'タイピングの卵' },
+            { threshold: 1000, title: 'ひよっこタイパー' },
+            { threshold: 5000, title: '見習いタイパー' },
+            { threshold: 10000, title: '一人前の指先' },
+            { threshold: 25000, title: 'キーボードウォリアー' },
+            { threshold: 50000, title: '指の求道者' },
+            { threshold: 100000, title: '銀指の打鍵士' },
+            { threshold: 250000, title: '音速のタイパー' },
+            { threshold: 500000, title: '光速の打鍵士' },
+            { threshold: 1000000, title: 'タイピング神' },
+        ];
+
         const achievements = {
             firstStep: { title: 'はじめの一歩', description: '初めてのタイピングを完了する' },
-            char1k: { title: 'キーボードウォリアー', description: '累計1,000文字入力する' },
-            char10k: { title: '指の求道者', description: '累計10,000文字入力する' },
-            kpm200: { title: '音速タイパー', description: 'KPM 200を達成する' },
+            kpm80: { title: 'スムーズな指運び', description: 'KPM 80を達成する' },
+            kpm120: { title: '流れるようなタイピング', description: 'KPM 120を達成する' },
+            kpm160: { title: '疾風のタイパー', description: 'KPM 160を達成する' },
+            kpm200: { title: '音速の領域', description: 'KPM 200を達成する' },
+            kpm300: { title: '超越者', description: 'KPM 300を達成する' },
             kpm400: { title: '光速の打鍵士', description: 'KPM 400を達成する' },
             noMistake: { title: 'パーフェクト', description: 'ノーミスで100文字以上の文章をクリア' },
             accuracy99: { title: '精密機械', description: '正確率99%以上でクリア' },
@@ -289,6 +362,8 @@
             setupPresets();
             setupAchievements();
             setupDeleteHistory();
+            setupResetAchievements();
+            setupModelSelect();
             resetGame();
             loadStats();
             loadHistory();
@@ -297,6 +372,16 @@
             textInput.addEventListener('input', handleInput);
             textInput.addEventListener('keydown', handleKeyDown);
             historyBody.addEventListener('click', handleHistoryClick);
+        }
+
+        function setupModelSelect() {
+            const savedModel = localStorage.getItem(STORAGE_KEY_MODEL);
+            if (savedModel) {
+                aiModelSelect.value = savedModel;
+            }
+            aiModelSelect.addEventListener('change', () => {
+                localStorage.setItem(STORAGE_KEY_MODEL, aiModelSelect.value);
+            });
         }
 
         function setupPresets() {
@@ -342,10 +427,33 @@
             });
             confirmDeleteButton.addEventListener('click', () => {
                 localStorage.removeItem(STORAGE_KEY_HISTORY);
+                // 統計情報もリセットするのが自然
                 localStorage.removeItem(STORAGE_KEY_STATS);
                 loadStats();
                 loadHistory();
                 confirmDeleteModal.classList.remove('active');
+            });
+        }
+
+        function setupResetAchievements() {
+            resetAchievementsButton.addEventListener('click', () => {
+                confirmResetAchievementsModal.classList.add('active');
+            });
+            cancelResetAchievementsButton.addEventListener('click', () => {
+                confirmResetAchievementsModal.classList.remove('active');
+            });
+            confirmResetAchievementsModal.addEventListener('click', (e) => {
+                if (e.target === confirmResetAchievementsModal) confirmResetAchievementsModal.classList.remove('active');
+            });
+            confirmResetAchievementsButton.addEventListener('click', () => {
+                gameStats.unlockedAchievements = [];
+                saveStats();
+                if (achievementsModal.classList.contains('active')) {
+                    renderAchievements();
+                }
+                confirmResetAchievementsModal.classList.remove('active');
+                dataStatus.textContent = "実績をリセットしました。";
+                setTimeout(() => { dataStatus.textContent = "設定と履歴をファイルに保存したり、ファイルから復元したりします。"; }, 3000);
             });
         }
 
@@ -369,9 +477,11 @@
                 }
             };
             check('firstStep', gameStats.gamesPlayed >= 1);
-            check('char1k', gameStats.totalCharsTyped >= 1000);
-            check('char10k', gameStats.totalCharsTyped >= 10000);
+            check('kpm80', gameStats.highestKpm >= 80);
+            check('kpm120', gameStats.highestKpm >= 120);
+            check('kpm160', gameStats.highestKpm >= 160);
             check('kpm200', gameStats.highestKpm >= 200);
+            check('kpm300', gameStats.highestKpm >= 300);
             check('kpm400', gameStats.highestKpm >= 400);
             check('noMistake', gameStats.lastGame.mistakes === 0 && gameStats.lastGame.textLength >= 100);
             check('accuracy99', gameStats.lastGame.accuracy >= 99);
@@ -395,10 +505,48 @@
         function loadStats() {
             const savedStats = JSON.parse(localStorage.getItem(STORAGE_KEY_STATS));
             gameStats = { totalCharsTyped: 0, gamesPlayed: 0, highestKpm: 0, aiGeneratedCount: 0, unlockedAchievements: [], lastGame: {}, ...savedStats };
+            updateRankDisplay();
         }
 
         function saveStats() {
             localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(gameStats));
+        }
+        
+        function updateRankDisplay() {
+            const totalChars = gameStats.totalCharsTyped;
+            let currentRank = ranks[0];
+            let nextRank = ranks[1];
+            
+            for (let i = ranks.length - 1; i >= 0; i--) {
+                if (totalChars >= ranks[i].threshold) {
+                    currentRank = ranks[i];
+                    nextRank = ranks[i + 1] || null;
+                    break;
+                }
+            }
+
+            const prevRankTitle = rankDisplayArea.currentTitle.textContent;
+            if (prevRankTitle && prevRankTitle !== currentRank.title) {
+                showToast(`称号アップ！「${currentRank.title}」になりました！`);
+            }
+
+            rankDisplayArea.currentTitle.textContent = currentRank.title;
+
+            if (nextRank) {
+                const prevThreshold = currentRank.threshold;
+                const progress = totalChars - prevThreshold;
+                const goal = nextRank.threshold - prevThreshold;
+                const percentage = Math.min((progress / goal) * 100, 100);
+                
+                rankDisplayArea.nextTitle.textContent = `次の称号: ${nextRank.title}`;
+                rankDisplayArea.progressBar.style.width = `${percentage}%`;
+                rankDisplayArea.progressText.textContent = `${totalChars.toLocaleString()} / ${nextRank.threshold.toLocaleString()}`;
+            } else {
+                // 最高ランク到達時
+                rankDisplayArea.nextTitle.textContent = "最高ランクに到達しました！";
+                rankDisplayArea.progressBar.style.width = "100%";
+                rankDisplayArea.progressText.textContent = `${totalChars.toLocaleString()} 文字`;
+            }
         }
 
         function setupSettingsToggle() {
@@ -447,7 +595,8 @@
             const dataToExport = {
                 apiKey: localStorage.getItem(STORAGE_KEY_APIKEY) || "",
                 history: JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || "[]"),
-                stats: JSON.parse(localStorage.getItem(STORAGE_KEY_STATS) || "{}")
+                stats: JSON.parse(localStorage.getItem(STORAGE_KEY_STATS) || "{}"),
+                model: localStorage.getItem(STORAGE_KEY_MODEL) || "gemini-1.5-flash-latest"
             };
             const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -473,9 +622,13 @@
                         localStorage.setItem(STORAGE_KEY_APIKEY, importedData.apiKey);
                         localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(importedData.history));
                         localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(importedData.stats));
+                        if (importedData.model) {
+                            localStorage.setItem(STORAGE_KEY_MODEL, importedData.model);
+                        }
                         setupApiKey();
                         loadStats();
                         loadHistory();
+                        setupModelSelect();
                         dataStatus.textContent = "データのインポートが完了しました。";
                     } else { throw new Error("ファイルの形式が正しくありません。"); }
                 } catch (error) {
@@ -488,13 +641,13 @@
             reader.readAsText(file);
         }
 
-        async function generateTextWithGemini(keyword, length) {
+        async function generateTextWithGemini(keyword, length, model) {
             gameStats.aiGeneratedCount++;
             saveStats();
             const apiKey = localStorage.getItem(STORAGE_KEY_APIKEY);
             if (!apiKey) return "エラー: APIキーが設定されていません。上の入力欄からAPIキーを設定してください。";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。句読点や改行も適度に含めてください。`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。句読点や改行も適度に含めてください。また、登場する人物名はすべてカタカナで、空白や特殊記号を含まないようにしてください。`;
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -503,6 +656,7 @@
                 });
                 if (!response.ok) {
                     if (response.status === 400) throw new Error(`APIキーが無効、または期限切れの可能性があります。`);
+                    if (response.status === 503) throw new Error(`AIサーバーが一時的に利用できません。しばらくしてからもう一度お試しください。`);
                     throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
                 }
                 const result = await response.json();
@@ -517,11 +671,12 @@
             const keyword = aiPromptInput.value.trim();
             if (!keyword) { customTextArea.value = "キーワードを入力してください。"; return; }
             const length = aiLengthInput.value || 150;
+            const model = aiModelSelect.value;
             generateButton.disabled = true;
             generateButtonText.textContent = '生成中...';
             loadingSpinner.classList.remove('hidden');
             customTextArea.value = "AIが文章を生成中です...";
-            const generatedText = await generateTextWithGemini(keyword, length);
+            const generatedText = await generateTextWithGemini(keyword, length, model);
             customTextArea.value = generatedText;
             generateButton.disabled = false;
             generateButtonText.textContent = '✨ 文章を生成';
@@ -564,7 +719,6 @@
             textDisplayContainer.scrollTop = 0;
         }
 
-        // ▼▼▼ パフォーマンス改善版 ▼▼▼
         function handleInput() {
             if (isFinished) return;
             if (!startTime) {
@@ -616,7 +770,6 @@
             
             updateStats();
         }
-        // ▲▲▲ パフォーマンス改善版 ▲▲▲
 
         function handleKeyDown(event) {
             if (event.key === 'Enter' && textInput.value.length === targetText.length) {
@@ -652,9 +805,10 @@
             gameStats.gamesPlayed++;
             if (currentKpm > gameStats.highestKpm) gameStats.highestKpm = currentKpm;
             gameStats.lastGame = { mistakes: mistakes, accuracy: currentAccuracy, textLength: targetText.length };
+            
+            updateRankDisplay();
             checkAchievements();
             saveStats();
-
             saveResult();
             loadHistory();
         }
