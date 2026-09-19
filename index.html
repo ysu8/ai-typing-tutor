@@ -135,7 +135,7 @@
                     </div>
                     <div>
                         <label for="ai-length" class="block text-xs font-medium text-gray-600 dark:text-gray-400">文字数</label>
-                        <input type="number" id="ai-length" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" value="150" min="50" max="2000" step="50">
+                        <input type="number" id="ai-length" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" value="1000" min="250" max="3000" step="250">
                     </div>
                     <div class="sm:col-span-2">
                         <label for="ai-model-select" class="block text-xs font-medium text-gray-600 dark:text-gray-400">モデル</label>
@@ -764,7 +764,7 @@
         async function handleGenerateText() {
             const keyword = aiPromptInput.value.trim();
             if (!keyword) { customTextArea.value = "キーワードを入力してください。"; return; }
-            const length = aiLengthInput.value || 150;
+            const length = aiLengthInput.value || 1000;
             const model = aiModelSelect.value;
             generateButton.disabled = true;
             generateButtonText.textContent = '生成中...';
