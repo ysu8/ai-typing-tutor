@@ -153,11 +153,19 @@
                     </button>
                 </div>
             </div>
-            <div class="bg-green-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3 flex flex-col">
-                <label for="presets-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">プリセットから選択:</label>
-                <select id="presets-select" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white flex-grow">
-                    <option value="">カテゴリを選択...</option>
-                </select>
+            <div class="bg-green-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="saved-keywords-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">保存したキーワード:</label>
+                        <button id="save-keyword-button" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">現在のキーワードを保存</button>
+                    </div>
+                    <select id="saved-keywords-select" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white">
+                        <option value="">保存済みキーワードから選択...</option>
+                    </select>
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button id="delete-keyword-button" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">選択中のキーワードを削除</button>
+                </div>
             </div>
         </div>
 
@@ -268,6 +276,7 @@
         const STORAGE_KEY_APIKEY = 'geminiApiKey';
         const STORAGE_KEY_STATS = 'typingGameStats';
         const STORAGE_KEY_MODEL = 'typingGameModel';
+        const STORAGE_KEY_SAVED_KEYWORDS = 'typingGameSavedKeywords';
 
         // DOM要素
         const settingsToggleButton = document.getElementById('settings-toggle-button');
@@ -298,7 +307,12 @@
         const historyBody = document.getElementById('history-body');
         const progressBar = document.getElementById('progress-bar');
         const kpmChartCanvas = document.getElementById('kpm-chart');
-        const presetsSelect = document.getElementById('presets-select');
+        
+        // 保存されたキーワード用のDOM要素
+        const savedKeywordsSelect = document.getElementById('saved-keywords-select');
+        const saveKeywordButton = document.getElementById('save-keyword-button');
+        const deleteKeywordButton = document.getElementById('delete-keyword-button');
+
         const achievementsModal = document.getElementById('achievements-modal');
         const achievementsButton = document.getElementById('achievements-button');
         const closeAchievementsModalButton = document.getElementById('close-achievements-modal');
@@ -337,23 +351,6 @@
         let gameStats = {};
         let isPaused = false;
         let timeWhenPaused = 0;
-
-        const presets = {
-            '文学作品': [
-                { title: '吾輩は猫である', text: '吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。' },
-                { title: '走れメロス', text: 'メロスは激怒した。必ず、かの邪智暴虐の王を除かなければならぬと決意した。' },
-            ],
-            '動物のことわざ': [
-                { title: '動物のことわざ集', text: '犬も歩けば棒に当たる。\n猿も木から落ちる。\n猫に小判。\n虎穴に入らずんば虎子を得ず。\n雀の涙。' },
-            ],
-            '早口言葉': [
-                { title: '早口言葉チャレンジ', text: '生麦生米生卵。\n隣の客はよく柿食う客だ。\n東京特許許可局長今日急遽休暇許可却下。'}
-            ],
-            '登場人物（カタカナ）': [
-                { title: '文豪', text: 'ナカジマアツシ\nダザイオサム\nアクタガワリュウノスケ' },
-                { title: 'バスケ選手', text: 'サクラギハナミチ\nルカワカエデ\nミツイヒサシ' },
-            ],
-        };
         
         const ranks = [
             { threshold: 0, title: 'タイピングの卵' },
@@ -388,7 +385,7 @@
             setupApiKey();
             setupDataHandlers();
             setupSettingsToggle();
-            setupPresets();
+            setupSavedKeywords();
             setupAchievements();
             setupDeleteHistory();
             setupResetAchievements();
@@ -477,23 +474,57 @@
             });
         }
 
-        function setupPresets() {
-            for (const category in presets) {
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = category;
-                presets[category].forEach((item, index) => {
-                    const option = document.createElement('option');
-                    option.value = `${category}-${index}`;
-                    option.textContent = item.title;
-                    optgroup.appendChild(option);
-                });
-                presetsSelect.appendChild(optgroup);
-            }
-            presetsSelect.addEventListener('change', (e) => {
-                const [category, index] = e.target.value.split('-');
-                if (category && index) {
-                    customTextArea.value = presets[category][index].text;
+        function setupSavedKeywords() {
+            updateSavedKeywordsDropdown();
+
+            saveKeywordButton.addEventListener('click', () => {
+                const keyword = aiPromptInput.value.trim();
+                if (!keyword) {
+                    showToast("保存するキーワードを入力してください。");
+                    return;
                 }
+                let saved = JSON.parse(localStorage.getItem(STORAGE_KEY_SAVED_KEYWORDS)) || [];
+                if (!saved.includes(keyword)) {
+                    saved.push(keyword);
+                    localStorage.setItem(STORAGE_KEY_SAVED_KEYWORDS, JSON.stringify(saved));
+                    updateSavedKeywordsDropdown();
+                    savedKeywordsSelect.value = keyword;
+                    showToast(`キーワード「${keyword}」を保存しました。`);
+                } else {
+                    showToast("このキーワードはすでに保存されています。");
+                }
+            });
+
+            deleteKeywordButton.addEventListener('click', () => {
+                const keyword = savedKeywordsSelect.value;
+                if (!keyword) {
+                    showToast("削除するキーワードを選択してください。");
+                    return;
+                }
+                let saved = JSON.parse(localStorage.getItem(STORAGE_KEY_SAVED_KEYWORDS)) || [];
+                saved = saved.filter(k => k !== keyword);
+                localStorage.setItem(STORAGE_KEY_SAVED_KEYWORDS, JSON.stringify(saved));
+                updateSavedKeywordsDropdown();
+                aiPromptInput.value = '';
+                showToast(`キーワード「${keyword}」を削除しました。`);
+            });
+
+            savedKeywordsSelect.addEventListener('change', (e) => {
+                const selected = e.target.value;
+                if (selected) {
+                    aiPromptInput.value = selected;
+                }
+            });
+        }
+
+        function updateSavedKeywordsDropdown() {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY_SAVED_KEYWORDS)) || [];
+            savedKeywordsSelect.innerHTML = '<option value="">保存済みキーワードから選択...</option>';
+            saved.forEach(keyword => {
+                const option = document.createElement('option');
+                option.value = keyword;
+                option.textContent = keyword;
+                savedKeywordsSelect.appendChild(option);
             });
         }
         
@@ -520,7 +551,6 @@
             });
             confirmDeleteButton.addEventListener('click', () => {
                 localStorage.removeItem(STORAGE_KEY_HISTORY);
-                // 統計情報もリセットするのが自然
                 localStorage.removeItem(STORAGE_KEY_STATS);
                 loadStats();
                 loadHistory();
@@ -635,7 +665,6 @@
                 rankDisplayArea.progressBar.style.width = `${percentage}%`;
                 rankDisplayArea.progressText.textContent = `${totalChars.toLocaleString()} / ${nextRank.threshold.toLocaleString()}`;
             } else {
-                // 最高ランク到達時
                 rankDisplayArea.nextTitle.textContent = "最高ランクに到達しました！";
                 rankDisplayArea.progressBar.style.width = "100%";
                 rankDisplayArea.progressText.textContent = `${totalChars.toLocaleString()} 文字`;
@@ -689,7 +718,8 @@
                 apiKey: localStorage.getItem(STORAGE_KEY_APIKEY) || "",
                 history: JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || "[]"),
                 stats: JSON.parse(localStorage.getItem(STORAGE_KEY_STATS) || "{}"),
-                model: localStorage.getItem(STORAGE_KEY_MODEL) || "gemini-1.5-flash-latest"
+                model: localStorage.getItem(STORAGE_KEY_MODEL) || "gemini-1.5-flash-latest",
+                savedKeywords: JSON.parse(localStorage.getItem(STORAGE_KEY_SAVED_KEYWORDS) || "[]")
             };
             const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -718,10 +748,14 @@
                         if (importedData.model) {
                             localStorage.setItem(STORAGE_KEY_MODEL, importedData.model);
                         }
+                        if (Array.isArray(importedData.savedKeywords)) {
+                            localStorage.setItem(STORAGE_KEY_SAVED_KEYWORDS, JSON.stringify(importedData.savedKeywords));
+                        }
                         setupApiKey();
                         loadStats();
                         loadHistory();
                         setupModelSelect();
+                        updateSavedKeywordsDropdown();
                         dataStatus.textContent = "データのインポートが完了しました。";
                     } else { throw new Error("ファイルの形式が正しくありません。"); }
                 } catch (error) {
