@@ -1006,7 +1006,7 @@
             if (!apiKey) return "エラー: APIキーが設定されていません。上の入力欄からAPIキーを設定してください。";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。
+            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。出力は本文のみにすること。
 また、登場する人物の名前は具体的な名前を出さずに、文脈に合った以下の変数名を使用して記述してください。
 ・日本人男性: \${japaneseMale}
 ・日本人女性: \${japaneseFemale}
@@ -1031,6 +1031,8 @@
 
                 const result = await response.json();
                 const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text || "文章を生成できませんでした。";
+                // debug
+                console.log(generatedText)
 
                 const nameLists = {
                     japaneseMale: ["翔太", "蓮", "大輝", "陸", "健太", "そら", "悠真", "湊", "拓海", "樹"],
@@ -1049,8 +1051,20 @@
                     fantasyMale: nameLists.fantasyMale[Math.floor(Math.random() * nameLists.fantasyMale.length)],
                     fantasyFemale: nameLists.fantasyFemale[Math.floor(Math.random() * nameLists.fantasyFemale.length)]
                 };
+                const interpolatedText = interpolate(generatedText, variables)
+                // debug
+                console.log(interpolatedText)
 
-                return interpolate(generatedText, variables);
+                // 全角半角空白を省く
+                let processedText = interpolatedText.replace(/[ 　]+/g, '');
+
+                // 日本語でない記号（半角の各種記号やマークダウン記号など）を省く
+                processedText = processedText.replace(/[!"#$%&'()*+,\-.\/:;<=>?@\[\\\]^_`{|}~]/g, '');
+
+                // 改行が2つ以上連続する場合は一つにする
+                processedText = processedText.replace(/\n{2,}/g, '\n');
+
+                return processedText;
 
             } catch (error) {
                 console.error("Gemini API Error:", error);
