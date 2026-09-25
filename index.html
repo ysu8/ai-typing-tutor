@@ -434,7 +434,6 @@
         </div>
     </div>
 
-    <!-- モーダル各種 -->
     <div id="achievements-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-4">
@@ -687,7 +686,6 @@
                 pauseButton.classList.remove('bg-green-500', 'hover:bg-green-600');
             }
         }
-
 
         function setupModelSelect() {
             const savedModel = localStorage.getItem(STORAGE_KEY_MODEL);
@@ -993,27 +991,67 @@
             reader.readAsText(file);
         }
 
+        // オブジェクトのキーを使って文字列内の変数を置換する関数
+        function interpolate(template, vars) {
+            // ${varName} または {varName} のパターンにマッチさせる正規表現
+            return template.replace(/\$\{?(\w+)\}?/g, (match, key) => {
+                return key in vars ? vars[key] : match;
+            });
+        }
+
         async function generateTextWithGemini(keyword, length, model) {
             gameStats.aiGeneratedCount++;
             saveStats();
             const apiKey = localStorage.getItem(STORAGE_KEY_APIKEY);
             if (!apiKey) return "エラー: APIキーが設定されていません。上の入力欄からAPIキーを設定してください。";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。句読点や改行も適度に含めてください。また、登場する人物名はすべてカタカナで、空白や特殊記号を含まないようにしてください。`;
+
+            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。
+また、登場する人物の名前は具体的な名前を出さずに、文脈に合った以下の変数名を使用して記述してください。
+・日本人男性: \${japaneseMale}
+・日本人女性: \${japaneseFemale}
+・外国人男性: \${foreignMale}
+・外国人女性: \${foreignFemale}
+・ファンタジー風男性: \${fantasyMale}
+・ファンタジー風女性: \${fantasyFemale}`;
+
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
+
                 if (!response.ok) {
                     if (response.status === 400) throw new Error(`APIキーが無効、または期限切れの可能性があります。`);
                     if (response.status === 429) throw new Error(`リクエストが多すぎます。少し時間をおいてから再度お試しください。`);
                     if (response.status === 503) throw new Error(`AIサーバーが一時的に利用できません。しばらくしてからもう一度お試しください。`);
                     throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
                 }
+
                 const result = await response.json();
-                return result.candidates?.[0]?.content?.parts?.[0]?.text || "文章を生成できませんでした。";
+                const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text || "文章を生成できませんでした。";
+
+                const nameLists = {
+                    japaneseMale: ["翔太", "蓮", "大輝", "陸", "健太", "そら", "悠真", "湊", "拓海", "樹"],
+                    japaneseFemale: ["さくら", "結衣", "陽菜", "ひまり", "美咲", "葵", "凛", "あかり", "結菜", "芽衣"],
+                    foreignFemale: ["エマ", "オリヴィア", "ソフィア", "アリス", "シャーロット", "クロエ", "ミア", "アメリア", "イザベラ", "リリー"],
+                    foreignMale: ["リアム", "ノア", "オリバー", "ウィリアム", "ジェームズ", "ルーカス", "ベンジャミン", "メイソン", "イーサン", "ローガン"],
+                    fantasyMale: ["アルト", "レオン", "シオン", "クロウ", "グレン", "アッシュ", "エルク", "カイン", "セシル", "ヴァン"],
+                    fantasyFemale: ["エルザ", "リリア", "アリア", "ルーナ", "セリア", "フレア", "アイリス", "ティア", "シルヴィア", "ミラ"]
+                };
+
+                const variables = {
+                    japaneseMale: nameLists.japaneseMale[Math.floor(Math.random() * nameLists.japaneseMale.length)],
+                    japaneseFemale: nameLists.japaneseFemale[Math.floor(Math.random() * nameLists.japaneseFemale.length)],
+                    foreignFemale: nameLists.foreignFemale[Math.floor(Math.random() * nameLists.foreignFemale.length)],
+                    foreignMale: nameLists.foreignMale[Math.floor(Math.random() * nameLists.foreignMale.length)],
+                    fantasyMale: nameLists.fantasyMale[Math.floor(Math.random() * nameLists.fantasyMale.length)],
+                    fantasyFemale: nameLists.fantasyFemale[Math.floor(Math.random() * nameLists.fantasyFemale.length)]
+                };
+
+                return interpolate(generatedText, variables);
+
             } catch (error) {
                 console.error("Gemini API Error:", error);
                 return `エラーが発生しました: ${error.message}`;
@@ -1029,8 +1067,10 @@
             generateButtonText.textContent = '生成中...';
             loadingSpinner.classList.remove('hidden');
             customTextArea.value = "AIが文章を生成中です...";
-            const generatedText = await generateTextWithGemini(keyword, length, model);
-            customTextArea.value = generatedText;
+
+            const finalProcessedText = await generateTextWithGemini(keyword, length, model);
+
+            customTextArea.value = finalProcessedText;
             generateButton.disabled = false;
             generateButtonText.textContent = '✨ 文章を生成';
             loadingSpinner.classList.add('hidden');
