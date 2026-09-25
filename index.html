@@ -941,7 +941,7 @@
                 apiKey: localStorage.getItem(STORAGE_KEY_APIKEY) || "",
                 history: JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || "[]"),
                 stats: JSON.parse(localStorage.getItem(STORAGE_KEY_STATS) || "{}"),
-                model: localStorage.getItem(STORAGE_KEY_MODEL) || "gemini-1.5-flash-latest",
+                model: localStorage.getItem(STORAGE_KEY_MODEL) || "gemini-3.8-flash",
                 savedKeywords: JSON.parse(localStorage.getItem(STORAGE_KEY_SAVED_KEYWORDS) || "[]")
             };
             const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
@@ -991,11 +991,39 @@
             reader.readAsText(file);
         }
 
-        // オブジェクトのキーを使って文字列内の変数を置換する関数
-        function interpolate(template, vars) {
-            // ${varName} または {varName} のパターンにマッチさせる正規表現
-            return template.replace(/\$\{?(\w+)\}?/g, (match, key) => {
-                return key in vars ? vars[key] : match;
+        function interpolate(template, nameLists) {
+            const assignedNames = {};
+            const availableNames = {
+                japaneseMale: [...nameLists.japaneseMale],
+                japaneseFemale: [...nameLists.japaneseFemale],
+                foreignMale: [...nameLists.foreignMale],
+                foreignFemale: [...nameLists.foreignFemale],
+                fantasyMale: [...nameLists.fantasyMale],
+                fantasyFemale: [...nameLists.fantasyFemale]
+            };
+
+            return template.replace(/\$\{?([a-zA-Z]+)(\d*)\}?/g, (match, type, num) => {
+                const fullVarName = type + num;
+
+                if (assignedNames[fullVarName]) {
+                    return assignedNames[fullVarName];
+                }
+
+                if (availableNames[type]) {
+                    const list = availableNames[type];
+                    let chosenName;
+                    if (list.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * list.length);
+                        chosenName = list.splice(randomIndex, 1)[0];
+                    } else {
+                        const fallbackList = nameLists[type];
+                        chosenName = fallbackList[Math.floor(Math.random() * fallbackList.length)];
+                    }
+                    assignedNames[fullVarName] = chosenName;
+                    return chosenName;
+                }
+
+                return match;
             });
         }
 
@@ -1008,12 +1036,13 @@
 
             const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。出力は本文のみにすること。
 また、登場する人物の名前は具体的な名前を出さずに、文脈に合った以下の変数名を使用して記述してください。
-・日本人男性: \${japaneseMale}
-・日本人女性: \${japaneseFemale}
-・外国人男性: \${foreignMale}
-・外国人女性: \${foreignFemale}
-・ファンタジー風男性: \${fantasyMale}
-・ファンタジー風女性: \${fantasyFemale}`;
+複数の同属性の人物を登場させる場合は、末尾に数字をつけて区別してください（例: \${japaneseFemale1}, \${japaneseFemale2}）。
+・日本人男性: \${japaneseMale1}, \${japaneseMale2}...
+・日本人女性: \${japaneseFemale1}, \${japaneseFemale2}...
+・外国人男性: \${foreignMale1}, \${foreignMale2}...
+・外国人女性: \${foreignFemale1}, \${foreignFemale2}...
+・ファンタジー風男性: \${fantasyMale1}, \${fantasyMale2}...
+・ファンタジー風女性: \${fantasyFemale1}, \${fantasyFemale2}...`;
 
             try {
                 const response = await fetch(apiUrl, {
@@ -1042,16 +1071,7 @@
                     fantasyMale: ["アルト", "レオン", "シオン", "クロウ", "グレン", "アッシュ", "エルク", "カイン", "セシル", "ヴァン"],
                     fantasyFemale: ["エルザ", "リリア", "アリア", "ルーナ", "セリア", "フレア", "アイリス", "ティア", "シルヴィア", "ミラ"]
                 };
-
-                const variables = {
-                    japaneseMale: nameLists.japaneseMale[Math.floor(Math.random() * nameLists.japaneseMale.length)],
-                    japaneseFemale: nameLists.japaneseFemale[Math.floor(Math.random() * nameLists.japaneseFemale.length)],
-                    foreignFemale: nameLists.foreignFemale[Math.floor(Math.random() * nameLists.foreignFemale.length)],
-                    foreignMale: nameLists.foreignMale[Math.floor(Math.random() * nameLists.foreignMale.length)],
-                    fantasyMale: nameLists.fantasyMale[Math.floor(Math.random() * nameLists.fantasyMale.length)],
-                    fantasyFemale: nameLists.fantasyFemale[Math.floor(Math.random() * nameLists.fantasyFemale.length)]
-                };
-                const interpolatedText = interpolate(generatedText, variables)
+                const interpolatedText = interpolate(generatedText, nameLists);
                 // debug
                 console.log(interpolatedText)
 
