@@ -1,70 +1,204 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIタイピング練習アプリ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             transition: background-color 0.3s, color 0.3s;
         }
-        .char.current { background-color: #3b82f6; color: white; border-radius: 2px; }
-        .char.correct { color: #22c55e; }
-        .char.incorrect { color: #ef4444; text-decoration: underline; text-decoration-color: #ef4444; }
-        .char.current::after {
-            content: ''; width: 2px; height: 1.2em; background: #3b82f6;
-            display: inline-block; animation: blink 0.7s infinite;
-            margin-left: 2px; vertical-align: middle;
+
+        .char.current {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 2px;
         }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        #text-display-container { max-height: 12rem; overflow-y: auto; scroll-behavior: smooth; }
-        #text-display { white-space: pre-wrap; word-break: break-all; }
-        .theme-switch-wrapper { display: flex; align-items: center; }
-        .theme-switch { display: inline-block; height: 24px; position: relative; width: 48px; }
-        .theme-switch input { display:none; }
-        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; border-radius: 24px; }
-        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 16px; left: 4px; position: absolute; transition: .4s; width: 16px; border-radius: 50%; }
-        input:checked + .slider { background-color: #3b82f6; }
-        input:checked + .slider:before { transform: translateX(24px); }
+
+        .char.correct {
+            color: #22c55e;
+        }
+
+        .char.incorrect {
+            color: #ef4444;
+            text-decoration: underline;
+            text-decoration-color: #ef4444;
+        }
+
+        .char.current::after {
+            content: '';
+            width: 2px;
+            height: 1.2em;
+            background: #3b82f6;
+            display: inline-block;
+            animation: blink 0.7s infinite;
+            margin-left: 2px;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        #text-display-container {
+            max-height: 12rem;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        #text-display {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 48px;
+        }
+
+        .theme-switch input {
+            display: none;
+        }
+
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
         #settings-panel {
             overflow: hidden;
             transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out, margin-top 0.5s ease-in-out;
         }
+
         .settings-collapsed {
             max-height: 0;
             opacity: 0;
             margin-top: 0 !important;
         }
+
         .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: rgba(0, 0, 0, 0.5);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 100;
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .modal-content {
-            background-color: white; border-radius: 1rem; padding: 2rem;
-            width: 90%; max-width: 48rem; max-height: 80vh; overflow-y: auto;
-            transform: scale(0.9); transition: transform 0.3s;
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 48rem;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
         }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        .dark .modal-content { background-color: #1f2937; }
-        .achievement-card.locked { filter: grayscale(1); opacity: 0.6; }
-        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .dark .modal-content {
+            background-color: #1f2937;
+        }
+
+        .achievement-card.locked {
+            filter: grayscale(1);
+            opacity: 0.6;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+        }
+
         .toast {
-            background-color: #1f2937; color: white; padding: 1rem 1.5rem;
-            border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex; align-items: center; gap: 0.75rem;
-            transform: translateX(120%); opacity: 0;
+            background-color: #1f2937;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            opacity: 0;
             transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
         }
-        .toast.show { transform: translateX(0); opacity: 1; }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
     </style>
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900">
     <div class="w-full max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8 space-y-6 my-8">
         <header class="flex justify-between items-center">
@@ -72,25 +206,43 @@
             <div class="flex items-center space-x-2 sm:space-x-4">
                 <div class="theme-switch-wrapper">
                     <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">☀️</span>
-                    <label class="theme-switch" for="theme-checkbox"><input type="checkbox" id="theme-checkbox" /><div class="slider"></div></label>
+                    <label class="theme-switch" for="theme-checkbox"><input type="checkbox" id="theme-checkbox" />
+                        <div class="slider"></div>
+                    </label>
                     <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">🌙</span>
                 </div>
-                <button id="achievements-button" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1m0-1V4m0 2.01V8m0 0h.01M12 14h.01M12 16h.01M12 18h.01M12 20h.01M18 8a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
+                <button id="achievements-button"
+                    class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1m0-1V4m0 2.01V8m0 0h.01M12 14h.01M12 16h.01M12 18h.01M12 20h.01M18 8a6 6 0 11-12 0 6 6 0 0112 0z">
+                        </path>
+                    </svg>
                 </button>
-                <button id="settings-toggle-button" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <button id="settings-toggle-button"
+                    class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
                 </button>
             </div>
         </header>
 
-        <div id="rank-display-area" class="p-4 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
+        <div id="rank-display-area"
+            class="p-4 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
             <div class="flex justify-between items-center mb-1">
                 <span id="current-rank-title" class="font-bold text-gray-800 dark:text-white"></span>
                 <span id="next-rank-title" class="text-sm text-gray-500 dark:text-gray-400"></span>
             </div>
             <div class="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-2.5">
-                <div id="rank-progress-bar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-2.5 rounded-full" style="width: 0%; transition: width 0.5s;"></div>
+                <div id="rank-progress-bar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-2.5 rounded-full"
+                    style="width: 0%; transition: width 0.5s;"></div>
             </div>
             <div class="text-right text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span id="rank-progress-text"></span>
@@ -98,48 +250,65 @@
         </div>
 
         <div id="settings-panel" class="space-y-6 settings-collapsed">
-             <div class="bg-yellow-50 dark:bg-gray-700/50 p-4 rounded-lg">
-                 <label for="api-key-input" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Gemini APIキー設定:</label>
-                 <div class="flex flex-col sm:flex-row gap-2">
-                    <input type="password" id="api-key-input" class="flex-grow p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="ご自身のAPIキーを入力してください">
-                    <button id="save-api-key-button" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">キーを保存</button>
-                 </div>
-                 <p id="api-key-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">APIキーはご自身のブラウザにのみ保存されます。</p>
+            <div class="bg-yellow-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                <label for="api-key-input"
+                    class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Gemini APIキー設定:</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="password" id="api-key-input"
+                        class="flex-grow p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                        placeholder="ご自身のAPIキーを入力してください">
+                    <button id="save-api-key-button"
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">キーを保存</button>
+                </div>
+                <p id="api-key-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">APIキーはご自身のブラウザにのみ保存されます。
+                </p>
             </div>
             <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3">
-                 <div>
-                     <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">データ管理:</label>
-                     <div class="flex flex-col sm:flex-row gap-2">
-                        <button id="export-button" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">エクスポート</button>
-                        <button id="import-button" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">インポート</button>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">データ管理:</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button id="export-button"
+                            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">エクスポート</button>
+                        <button id="import-button"
+                            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">インポート</button>
                         <input type="file" id="import-file-input" class="hidden" accept=".json">
-                     </div>
-                     <p id="data-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">設定と履歴をファイルに保存したり、ファイルから復元したりします。</p>
-                 </div>
-                 <div>
-                     <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">リセット:</label>
-                     <div class="flex flex-col sm:flex-row gap-2">
-                         <button id="reset-achievements-button" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">実績をリセット</button>
-                     </div>
-                 </div>
+                    </div>
+                    <p id="data-status" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        設定と履歴をファイルに保存したり、ファイルから復元したりします。</p>
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">リセット:</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button id="reset-achievements-button"
+                            class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">実績をリセット</button>
+                    </div>
+                </div>
             </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-blue-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">AIで練習文を生成:</label>
                 <div>
-                    <label for="ai-prompt" class="block text-xs font-medium text-gray-600 dark:text-gray-400">キーワード</label>
-                    <input type="text" id="ai-prompt" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="例: 夏休み">
+                    <label for="ai-prompt"
+                        class="block text-xs font-medium text-gray-600 dark:text-gray-400">キーワード</label>
+                    <input type="text" id="ai-prompt"
+                        class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                        placeholder="例: 夏休み">
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="ai-length" class="block text-xs font-medium text-gray-600 dark:text-gray-400">文字数</label>
-                        <input type="number" id="ai-length" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" value="1000" min="250" max="3000" step="250">
+                        <label for="ai-length"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400">文字数</label>
+                        <input type="number" id="ai-length"
+                            class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                            value="1000" min="250" max="3000" step="250">
                     </div>
                     <div>
-                        <label for="ai-model-select" class="block text-xs font-medium text-gray-600 dark:text-gray-400">モデル</label>
-                        <select id="ai-model-select" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
+                        <label for="ai-model-select"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400">モデル</label>
+                        <select id="ai-model-select"
+                            class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
                             <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
                             <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash lite</option>
                             <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
@@ -147,58 +316,94 @@
                     </div>
                 </div>
                 <div class="flex justify-end pt-2">
-                    <button id="generate-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center w-full sm:w-auto">
+                    <button id="generate-button"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center w-full sm:w-auto">
                         <span id="generate-button-text">✨ 文章を生成</span>
-                        <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
                     </button>
                 </div>
             </div>
             <div class="bg-green-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3 flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-center mb-2">
-                        <label for="saved-keywords-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">保存したキーワード:</label>
-                        <button id="save-keyword-button" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">現在のキーワードを保存</button>
+                        <label for="saved-keywords-select"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">保存したキーワード:</label>
+                        <button id="save-keyword-button"
+                            class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">現在のキーワードを保存</button>
                     </div>
-                    <select id="saved-keywords-select" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white">
+                    <select id="saved-keywords-select"
+                        class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white">
                         <option value="">保存済みキーワードから選択...</option>
                     </select>
                 </div>
                 <div class="flex justify-end pt-2">
-                    <button id="delete-keyword-button" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">選択中のキーワードを削除</button>
+                    <button id="delete-keyword-button"
+                        class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors">選択中のキーワードを削除</button>
                 </div>
             </div>
         </div>
 
         <div>
-            <label for="custom-text" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">練習したい文章:</label>
-            <textarea id="custom-text" rows="4" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white"></textarea>
+            <label for="custom-text"
+                class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">練習したい文章:</label>
+            <textarea id="custom-text" rows="4"
+                class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white"></textarea>
         </div>
 
         <div class="relative bg-gray-100 dark:bg-gray-900/50 p-6 rounded-lg shadow-inner">
             <div id="text-display-container" class="mb-4">
-                <div id="text-display" class="text-2xl md:text-3xl leading-relaxed tracking-wider text-gray-600 dark:text-gray-400 select-none font-mono"></div>
+                <div id="text-display"
+                    class="text-2xl md:text-3xl leading-relaxed tracking-wider text-gray-600 dark:text-gray-400 select-none font-mono">
+                </div>
             </div>
-            <textarea id="text-input" rows="5" class="w-full text-2xl md:text-3xl p-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono resize-none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled></textarea>
-            <div id="pause-overlay" class="absolute inset-0 bg-black/70 flex-col items-center justify-center hidden rounded-lg">
+            <textarea id="text-input" rows="5"
+                class="w-full text-2xl md:text-3xl p-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono resize-none"
+                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled></textarea>
+            <div id="pause-overlay"
+                class="absolute inset-0 bg-black/70 flex-col items-center justify-center hidden rounded-lg">
                 <h2 class="text-4xl font-bold text-white tracking-widest">一時停止中</h2>
                 <p class="text-white mt-2 text-sm">Escapeキーでも再開できます</p>
             </div>
         </div>
 
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%; transition: width 0.1s;"></div>
+            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%; transition: width 0.1s;">
+            </div>
         </div>
 
         <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div class="bg-blue-100 dark:bg-blue-900/50 p-4 rounded-lg"><p class="text-sm text-blue-800 dark:text-blue-300">時間</p><p id="time" class="text-2xl font-semibold text-blue-900 dark:text-blue-200">0.00秒</p></div>
-            <div class="bg-green-100 dark:bg-green-900/50 p-4 rounded-lg"><p class="text-sm text-green-800 dark:text-green-300">タイプ/分</p><p id="kpm" class="text-2xl font-semibold text-green-900 dark:text-green-200">0.00</p></div>
-            <div class="bg-yellow-100 dark:bg-yellow-900/50 p-4 rounded-lg"><p class="text-sm text-yellow-800 dark:text-yellow-300">ミスタイプ</p><p id="mistakes" class="text-2xl font-semibold text-yellow-900 dark:text-yellow-200">0</p></div>
-            <div class="bg-purple-100 dark:bg-purple-900/50 p-4 rounded-lg"><p class="text-sm text-purple-800 dark:text-purple-300">正確率</p><p id="accuracy" class="text-2xl font-semibold text-purple-900 dark:text-purple-200">100.00%</p></div>
+            <div class="bg-blue-100 dark:bg-blue-900/50 p-4 rounded-lg">
+                <p class="text-sm text-blue-800 dark:text-blue-300">時間</p>
+                <p id="time" class="text-2xl font-semibold text-blue-900 dark:text-blue-200">0.00秒</p>
+            </div>
+            <div class="bg-green-100 dark:bg-green-900/50 p-4 rounded-lg">
+                <p class="text-sm text-green-800 dark:text-green-300">タイプ/分</p>
+                <p id="kpm" class="text-2xl font-semibold text-green-900 dark:text-green-200">0.00</p>
+            </div>
+            <div class="bg-yellow-100 dark:bg-yellow-900/50 p-4 rounded-lg">
+                <p class="text-sm text-yellow-800 dark:text-yellow-300">ミスタイプ</p>
+                <p id="mistakes" class="text-2xl font-semibold text-yellow-900 dark:text-yellow-200">0</p>
+            </div>
+            <div class="bg-purple-100 dark:bg-purple-900/50 p-4 rounded-lg">
+                <p class="text-sm text-purple-800 dark:text-purple-300">正確率</p>
+                <p id="accuracy" class="text-2xl font-semibold text-purple-900 dark:text-purple-200">100.00%</p>
+            </div>
         </div>
-        
+
         <div class="flex justify-center gap-4">
-            <button id="reset-button" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 text-lg">スタート / リセット</button>
-            <button id="pause-button" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 text-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>一時停止</button>
+            <button id="reset-button"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 text-lg">スタート
+                / リセット</button>
+            <button id="pause-button"
+                class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>一時停止</button>
         </div>
 
         <div class="space-y-4">
@@ -208,13 +413,19 @@
             </div>
             <div class="flex justify-between items-center pt-4">
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">練習履歴</h2>
-                <button id="clear-history-button" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-3 rounded-lg transition-colors duration-200">履歴を消去</button>
+                <button id="clear-history-button"
+                    class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-3 rounded-lg transition-colors duration-200">履歴を消去</button>
             </div>
             <div class="max-h-64 overflow-y-auto bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300 sticky top-0">
+                    <thead
+                        class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300 sticky top-0">
                         <tr>
-                            <th scope="col" class="px-4 py-3">日時</th><th scope="col" class="px-4 py-3">タイプ/分</th><th scope="col" class="px-4 py-3">正確率</th><th scope="col" class="px-4 py-3">文章</th><th scope="col" class="px-4 py-3">操作</th>
+                            <th scope="col" class="px-4 py-3">日時</th>
+                            <th scope="col" class="px-4 py-3">タイプ/分</th>
+                            <th scope="col" class="px-4 py-3">正確率</th>
+                            <th scope="col" class="px-4 py-3">文章</th>
+                            <th scope="col" class="px-4 py-3">操作</th>
                         </tr>
                     </thead>
                     <tbody id="history-body"></tbody>
@@ -226,7 +437,11 @@
     <!-- モーダル各種 -->
     <div id="achievements-modal" class="modal-overlay">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-gray-800 dark:text-white">アチーブメント</h2><button id="close-achievements-modal" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">&times;</button></div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">アチーブメント</h2><button
+                    id="close-achievements-modal"
+                    class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">&times;</button>
+            </div>
             <div id="achievements-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
         </div>
     </div>
@@ -235,36 +450,46 @@
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">履歴の削除</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">すべての練習履歴と統計データが削除されます。この操作は元に戻せません。本当に削除しますか？</p>
             <div class="flex justify-end gap-4 mt-6">
-                <button id="cancel-delete-button" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200">キャンセル</button>
-                <button id="confirm-delete-button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white">削除する</button>
+                <button id="cancel-delete-button"
+                    class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200">キャンセル</button>
+                <button id="confirm-delete-button"
+                    class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white">削除する</button>
             </div>
         </div>
     </div>
     <div id="confirm-reset-achievements-modal" class="modal-overlay">
         <div class="modal-content max-w-sm">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">実績のリセット</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">すべての実績がリセット（未達成の状態に）されます。この操作は元に戻せません。本当にリセットしますか？</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">すべての実績がリセット（未達成の状態に）されます。この操作は元に戻せません。本当にリセットしますか？
+            </p>
             <div class="flex justify-end gap-4 mt-6">
-                <button id="cancel-reset-achievements-button" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200">キャンセル</button>
-                <button id="confirm-reset-achievements-button" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white">リセットする</button>
+                <button id="cancel-reset-achievements-button"
+                    class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200">キャンセル</button>
+                <button id="confirm-reset-achievements-button"
+                    class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white">リセットする</button>
             </div>
         </div>
     </div>
-     <div id="start-confirm-modal" class="modal-overlay">
+    <div id="start-confirm-modal" class="modal-overlay">
         <div class="modal-content max-w-lg">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">練習を開始しますか？</h3>
             <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <p class="text-sm text-gray-600 dark:text-gray-400">文字数: <span id="text-length-display" class="font-bold text-lg text-gray-800 dark:text-white">0</span></p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">文字数: <span id="text-length-display"
+                        class="font-bold text-lg text-gray-800 dark:text-white">0</span></p>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">文章のプレビュー:</p>
-                <p id="text-snippet-display" class="mt-1 text-gray-800 dark:text-gray-200 max-h-24 overflow-y-auto text-sm whitespace-pre-wrap"></p>
+                <p id="text-snippet-display"
+                    class="mt-1 text-gray-800 dark:text-gray-200 max-h-24 overflow-y-auto text-sm whitespace-pre-wrap">
+                </p>
             </div>
             <div class="flex justify-end gap-4 mt-6">
-                <button id="cancel-start-button" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200">キャンセル</button>
-                <button id="confirm-start-button" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white">スタート</button>
+                <button id="cancel-start-button"
+                    class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200">キャンセル</button>
+                <button id="confirm-start-button"
+                    class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white">スタート</button>
             </div>
         </div>
     </div>
-    
+
     <div id="toast-container"></div>
 
     <script>
@@ -307,7 +532,7 @@
         const historyBody = document.getElementById('history-body');
         const progressBar = document.getElementById('progress-bar');
         const kpmChartCanvas = document.getElementById('kpm-chart');
-        
+
         // 保存されたキーワード用のDOM要素
         const savedKeywordsSelect = document.getElementById('saved-keywords-select');
         const saveKeywordButton = document.getElementById('save-keyword-button');
@@ -351,7 +576,7 @@
         let gameStats = {};
         let isPaused = false;
         let timeWhenPaused = 0;
-        
+
         const ranks = [
             { threshold: 0, title: 'タイピングの卵' },
             { threshold: 1000, title: 'ひよっこタイパー' },
@@ -408,7 +633,7 @@
             textInput.addEventListener('keydown', handleKeyDown);
             historyBody.addEventListener('click', handleHistoryClick);
         }
-        
+
         function setupStartConfirm() {
             confirmStartButton.addEventListener('click', () => {
                 resetGame(true);
@@ -417,7 +642,7 @@
             const closeModal = () => startConfirmModal.classList.remove('active');
             cancelStartButton.addEventListener('click', closeModal);
             startConfirmModal.addEventListener('click', (e) => {
-                if(e.target === startConfirmModal) closeModal();
+                if (e.target === startConfirmModal) closeModal();
             });
         }
 
@@ -527,7 +752,7 @@
                 savedKeywordsSelect.appendChild(option);
             });
         }
-        
+
         function setupAchievements() {
             achievementsButton.addEventListener('click', () => {
                 renderAchievements();
@@ -538,7 +763,7 @@
                 if (e.target === achievementsModal) achievementsModal.classList.remove('active');
             });
         }
-        
+
         function setupDeleteHistory() {
             clearHistoryButton.addEventListener('click', () => {
                 confirmDeleteModal.classList.add('active');
@@ -591,7 +816,7 @@
                 achievementsGrid.appendChild(card);
             }
         }
-        
+
         function checkAchievements() {
             const check = (id, condition) => {
                 if (!gameStats.unlockedAchievements.includes(id) && condition) {
@@ -634,12 +859,12 @@
         function saveStats() {
             localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(gameStats));
         }
-        
+
         function updateRankDisplay() {
             const totalChars = gameStats.totalCharsTyped;
             let currentRank = ranks[0];
             let nextRank = ranks[1];
-            
+
             for (let i = ranks.length - 1; i >= 0; i--) {
                 if (totalChars >= ranks[i].threshold) {
                     currentRank = ranks[i];
@@ -660,7 +885,7 @@
                 const progress = totalChars - prevThreshold;
                 const goal = nextRank.threshold - prevThreshold;
                 const percentage = Math.min((progress / goal) * 100, 100);
-                
+
                 rankDisplayArea.nextTitle.textContent = `次の称号: ${nextRank.title}`;
                 rankDisplayArea.progressBar.style.width = `${percentage}%`;
                 rankDisplayArea.progressText.textContent = `${totalChars.toLocaleString()} / ${nextRank.threshold.toLocaleString()}`;
@@ -761,8 +986,8 @@
                 } catch (error) {
                     dataStatus.textContent = `インポートエラー: ${error.message}`;
                 } finally {
-                     setTimeout(() => { dataStatus.textContent = "設定と履歴をファイルに保存したり、ファイルから復元したりします。"; }, 5000);
-                     importFileInput.value = "";
+                    setTimeout(() => { dataStatus.textContent = "設定と履歴をファイルに保存したり、ファイルから復元したりします。"; }, 5000);
+                    importFileInput.value = "";
                 }
             };
             reader.readAsText(file);
@@ -794,7 +1019,7 @@
                 return `エラーが発生しました: ${error.message}`;
             }
         }
-        
+
         async function handleGenerateText() {
             const keyword = aiPromptInput.value.trim();
             if (!keyword) { customTextArea.value = "キーワードを入力してください。"; return; }
@@ -831,7 +1056,7 @@
             isFinished = false;
             textInput.value = '';
             textInput.disabled = !startGame;
-            
+
             targetText = customTextArea.value || DEFAULT_TEXT;
             textDisplay.innerHTML = '';
             targetText.split('').forEach(char => {
@@ -841,11 +1066,11 @@
                 textDisplay.appendChild(charSpan);
             });
             if (textDisplay.firstChild) textDisplay.firstChild.classList.add('current');
-            
+
             mistakes = 0;
             updateStats();
             progressBar.style.width = '0%';
-            if(startGame) textInput.focus();
+            if (startGame) textInput.focus();
             textDisplayContainer.scrollTop = 0;
 
             isPaused = false;
@@ -872,7 +1097,7 @@
 
             chars.forEach((charSpan, i) => {
                 const character = typedText[i];
-                
+
                 if (character != null) {
                     if (character === charSpan.innerText) {
                         if (!charSpan.classList.contains('correct')) charSpan.classList.add('correct');
@@ -895,18 +1120,18 @@
             });
 
             if (currentLength === targetText.length && chars[currentLength - 1]) {
-                 if (chars[currentLength - 1].classList.contains('current')) chars[currentLength - 1].classList.remove('current');
+                if (chars[currentLength - 1].classList.contains('current')) chars[currentLength - 1].classList.remove('current');
             }
 
             mistakes = currentMistakes;
-            
+
             if (currentLength < targetText.length) {
                 const currentEl = chars[currentLength];
-                 if (currentEl.offsetTop < textDisplayContainer.scrollTop || currentEl.offsetTop + currentEl.offsetHeight > textDisplayContainer.scrollTop + textDisplayContainer.clientHeight) {
-                     currentEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                if (currentEl.offsetTop < textDisplayContainer.scrollTop || currentEl.offsetTop + currentEl.offsetHeight > textDisplayContainer.scrollTop + textDisplayContainer.clientHeight) {
+                    currentEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
                 }
             }
-            
+
             updateStats();
         }
 
@@ -916,7 +1141,7 @@
                 if (!isFinished) endGame();
             }
         }
-        
+
         function updateStats() {
             const typedLength = textInput.value.length;
             if (startTime) {
@@ -933,19 +1158,19 @@
             const progress = targetText.length > 0 ? (typedLength / targetText.length) * 100 : 0;
             progressBar.style.width = `${progress}%`;
         }
-        
+
         function endGame() {
             isFinished = true;
             clearInterval(timerInterval);
             textInput.disabled = true;
             pauseButton.disabled = true;
-            updateStats(); 
-            
+            updateStats();
+
             gameStats.totalCharsTyped += targetText.length;
             gameStats.gamesPlayed++;
             if (currentKpm > gameStats.highestKpm) gameStats.highestKpm = currentKpm;
             gameStats.lastGame = { mistakes: mistakes, accuracy: currentAccuracy, textLength: targetText.length };
-            
+
             updateRankDisplay();
             checkAchievements();
             saveStats();
@@ -972,7 +1197,7 @@
             if (history.length === 0) {
                 historyBody.innerHTML = `<tr><td colspan="5" class="text-center p-4">まだ練習履歴がありません。</td></tr>`;
             } else {
-                 history.forEach((result, index) => {
+                history.forEach((result, index) => {
                     const row = document.createElement('tr');
                     row.className = 'bg-white dark:bg-gray-800 border-b dark:border-gray-700';
                     row.innerHTML = `
@@ -991,12 +1216,12 @@
             }
             renderKpmChart(history);
         }
-        
+
         function renderKpmChart(history) {
             const reversedHistory = [...history].reverse();
             const labels = reversedHistory.map(item => item.date);
             const data = reversedHistory.map(item => parseFloat(item.kpm));
-            
+
             if (kpmChart) {
                 kpmChart.data.labels = labels;
                 kpmChart.data.datasets[0].data = data;
@@ -1054,4 +1279,5 @@
         initialize();
     </script>
 </body>
+
 </html>
