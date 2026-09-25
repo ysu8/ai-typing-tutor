@@ -991,42 +991,6 @@
             reader.readAsText(file);
         }
 
-        function interpolate(template, nameLists) {
-            const assignedNames = {};
-            const availableNames = {
-                japaneseMale: [...nameLists.japaneseMale],
-                japaneseFemale: [...nameLists.japaneseFemale],
-                foreignMale: [...nameLists.foreignMale],
-                foreignFemale: [...nameLists.foreignFemale],
-                fantasyMale: [...nameLists.fantasyMale],
-                fantasyFemale: [...nameLists.fantasyFemale]
-            };
-
-            return template.replace(/\$\{?([a-zA-Z]+)(\d*)\}?/g, (match, type, num) => {
-                const fullVarName = type + num;
-
-                if (assignedNames[fullVarName]) {
-                    return assignedNames[fullVarName];
-                }
-
-                if (availableNames[type]) {
-                    const list = availableNames[type];
-                    let chosenName;
-                    if (list.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * list.length);
-                        chosenName = list.splice(randomIndex, 1)[0];
-                    } else {
-                        const fallbackList = nameLists[type];
-                        chosenName = fallbackList[Math.floor(Math.random() * fallbackList.length)];
-                    }
-                    assignedNames[fullVarName] = chosenName;
-                    return chosenName;
-                }
-
-                return match;
-            });
-        }
-
         async function generateTextWithGemini(keyword, length, model) {
             gameStats.aiGeneratedCount++;
             saveStats();
@@ -1034,15 +998,7 @@
             if (!apiKey) return "エラー: APIキーが設定されていません。上の入力欄からAPIキーを設定してください。";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。出力は本文のみにすること。
-また、登場する人物の名前は具体的な名前を出さずに、文脈に合った以下の変数名を使用して記述してください。
-複数の同属性の人物を登場させる場合は、末尾に数字をつけて区別してください（例: \${japaneseFemale1}, \${japaneseFemale2}）。
-・日本人男性: \${japaneseMale1}, \${japaneseMale2}...
-・日本人女性: \${japaneseFemale1}, \${japaneseFemale2}...
-・外国人男性: \${foreignMale1}, \${foreignMale2}...
-・外国人女性: \${foreignFemale1}, \${foreignFemale2}...
-・ファンタジー風男性: \${fantasyMale1}, \${fantasyMale2}...
-・ファンタジー風女性: \${fantasyFemale1}, \${fantasyFemale2}...`;
+            const prompt = `「${keyword}」をテーマにした、タイピング練習に使える約${length}文字の文章を日本語で生成してください。句読点や改行も適度に含めてください。また、登場する人物名はひらがな、またはカタカナで、空白や特殊記号を含まないようにしてください。`;
 
             try {
                 const response = await fetch(apiUrl, {
@@ -1063,20 +1019,8 @@
                 // debug
                 console.log(generatedText)
 
-                const nameLists = {
-                    japaneseMale: ["翔太", "蓮", "大輝", "陸", "健太", "そら", "悠真", "湊", "拓海", "樹"],
-                    japaneseFemale: ["さくら", "結衣", "陽菜", "ひまり", "美咲", "葵", "凛", "あかり", "結菜", "芽衣"],
-                    foreignFemale: ["エマ", "オリヴィア", "ソフィア", "アリス", "シャーロット", "クロエ", "ミア", "アメリア", "イザベラ", "リリー"],
-                    foreignMale: ["リアム", "ノア", "オリバー", "ウィリアム", "ジェームズ", "ルーカス", "ベンジャミン", "メイソン", "イーサン", "ローガン"],
-                    fantasyMale: ["アルト", "レオン", "シオン", "クロウ", "グレン", "アッシュ", "エルク", "カイン", "セシル", "ヴァン"],
-                    fantasyFemale: ["エルザ", "リリア", "アリア", "ルーナ", "セリア", "フレア", "アイリス", "ティア", "シルヴィア", "ミラ"]
-                };
-                const interpolatedText = interpolate(generatedText, nameLists);
-                // debug
-                console.log(interpolatedText)
-
                 // 全角半角空白を省く
-                let processedText = interpolatedText.replace(/[ 　]+/g, '');
+                let processedText = generatedText.replace(/[ 　]+/g, '');
 
                 // 日本語でない記号（半角の各種記号やマークダウン記号など）を省く
                 processedText = processedText.replace(/[!"#$%&'()*+,\-.\/:;<=>?@\[\\\]^_`{|}~]/g, '');
